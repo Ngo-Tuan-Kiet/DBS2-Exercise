@@ -2,6 +2,7 @@ package exercise1;
 
 import de.hpi.dbs2.ChosenImplementation;
 import de.hpi.dbs2.dbms.*;
+import de.hpi.dbs2.dbms.utils.BlockSorter;
 import de.hpi.dbs2.exercise1.SortOperation;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,24 +36,27 @@ public class TPMMSJava extends SortOperation {
         int freeBlocks = bm.getFreeBlocks();
 
 /*        Block test1 = r_it.next();
-
         bm.load(test1);
         System.out.println(bm);
         System.out.println(test1.iterator().next());*/
-        for (int i = 0; i < freeBlocks; i++) {
+
+        //for (int i = 0; i < freeBlocks; i++) {
             Block b = r_it.next();
             bm.load(b);
             int block_size = b.getSize();
             List<Tuple> tuples = new ArrayList<>();
+            List<Block> block = new ArrayList<>();
+            block.add(b);
+            Comparator<Tuple> byIndex = (p1, p2) -> p1.get(0) - p2.get(0);;
 
+            // BlockSorter.sort(relation, block, byIndex);
+
+            BlockSorter.INSTANCE.sort(relation, block, byIndex);
             for (int j = 0; j < block_size; j++) {
                 Tuple t = b.iterator().next();
                 System.out.println(t.get(0).getClass());
                 tuples.add(t);
-               /* List result = tuples.stream()
-                        .sorted((o1,o2)-> o1.get(0).compareTo(o2.get(0)))
-                        .collect(Collectors.toList());*/
-            }
+           // }
 
         }
         //throw new UnsupportedOperationException("TODO");
