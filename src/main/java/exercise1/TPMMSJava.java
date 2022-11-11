@@ -41,22 +41,22 @@ public class TPMMSJava extends SortOperation {
         System.out.println(test1.iterator().next());*/
 
         //for (int i = 0; i < freeBlocks; i++) {
-            Block b = r_it.next();
-            bm.load(b);
-            int block_size = b.getSize();
-            List<Tuple> tuples = new ArrayList<>();
-            List<Block> block = new ArrayList<>();
-            block.add(b);
-            Comparator<Tuple> byIndex = (p1, p2) -> p1.get(0) - p2.get(0);;
-
+        Block b = r_it.next();
+        bm.load(b);
+        int block_size = b.getSize();
+        List<Tuple> tuples = new ArrayList<>();
+        List<Block> block = new ArrayList<>();
+        block.add(b);
+        ColumnDefinition cd = new ColumnDefinition();;
+        int sort_index = getSortColumnIndex();
             // BlockSorter.sort(relation, block, byIndex);
 
-            BlockSorter.INSTANCE.sort(relation, block, byIndex);
-            for (int j = 0; j < block_size; j++) {
-                Tuple t = b.iterator().next();
-                System.out.println(t.get(0).getClass());
-                tuples.add(t);
-           // }
+        BlockSorter.INSTANCE.sort(relation, block, cd.getColumnComparator(sort_index));
+        for (int j = 0; j < block_size; j++) {
+            Tuple t = b.iterator().next();
+            System.out.println(t.get(0).getClass());
+            tuples.add(t);
+       // }
 
         }
         //throw new UnsupportedOperationException("TODO");
