@@ -21,8 +21,7 @@ public class TPMMSJava extends SortOperation {
     @Override
     public int estimatedIOCost(@NotNull Relation relation) {
 
-        System.out.println("erqewljrlkqwjr");
-        return 1;
+        return 4 * relation.getEstimatedSize();
         //throw new UnsupportedOperationException("TODO");
     }
 
@@ -30,6 +29,9 @@ public class TPMMSJava extends SortOperation {
     public void sort(@NotNull Relation relation, @NotNull BlockOutput output) {
         BlockManager bm = getBlockManager();
         Iterator<Block> r_it_test = relation.iterator();
+
+        if (relation.getEstimatedSize() > bm.getFreeBlocks() * bm.getFreeBlocks())
+            throw new RelationSizeExceedsCapacityException();
 
         int r_size = relation.getEstimatedSize();
         System.out.println(r_size);
