@@ -34,8 +34,7 @@ public class TPMMSJava extends SortOperation {
         int r_size = relation.getEstimatedSize();
         System.out.println(r_size);
 
-
-        ArrayList<Block>[] sublists = new ArrayList[(int) Math.ceil(r_size/bm.getFreeBlocks())];
+        ArrayList<ArrayList<Block> > sublists = new ArrayList<>((int) Math.ceil(r_size/bm.getFreeBlocks()));
         int current_list = 0;
         ArrayList<Block> blocks = new ArrayList<>();
         ColumnDefinition cd = relation.getColumns();;
@@ -49,11 +48,11 @@ public class TPMMSJava extends SortOperation {
             if (bm.getFreeBlocks() == 0){
                 BlockSorter.INSTANCE.sort(relation, blocks, cd.getColumnComparator(sort_index));
                 //System.out.println(blocks);
-                sublists[current_list] = new ArrayList<>();
+                sublists.add(current_list, new ArrayList<>());
                 for (Block block:
                         blocks) {
                     //output.output(b);
-                    sublists[current_list].add(block);
+                    sublists.get(current_list).add(block);
                     bm.release(block, false);
                 }
                 current_list++;
@@ -67,7 +66,21 @@ public class TPMMSJava extends SortOperation {
                 bm.release(b, true);
             }
         }
-        System.out.println(sublists[0].iterator());
+        Iterator[] iters = new Iterator[sublists.size()];
+//        System.out.println(iters);
+//        Iterator test = sublists.get(0).iterator();
+//        Block b = (Block) test.next();
+//        b = (Block) test.next();
+//        b = (Block) test.next();
+//        bm.load(b);
+//        System.out.println(b);
+        for (int i = 0; i < sublists.size(); i++) {
+            iters[i] = sublists.get(i).iterator();
+        }
+
+        for (int i = 0; i < r_size; i++) {
+
+        }
 
 //        Block b = r_it_test.next();
 //        bm.load(b);
