@@ -29,36 +29,56 @@ public class TPMMSJava extends SortOperation {
     @Override
     public void sort(@NotNull Relation relation, @NotNull BlockOutput output) {
         BlockManager bm = getBlockManager();
-        Iterator<Block> r_it = relation.iterator();
+        Iterator<Block> r_it_test = relation.iterator();
+
+        int r_size = relation.getEstimatedSize();
+        System.out.println(r_size);
 
 
-        System.out.println(bm);
-        int freeBlocks = bm.getFreeBlocks();
-
-/*        Block test1 = r_it.next();
-        bm.load(test1);
-        System.out.println(bm);
-        System.out.println(test1.iterator().next());*/
-
-        //for (int i = 0; i < freeBlocks; i++) {
-        Block b = r_it.next();
-        bm.load(b);
-        int block_size = b.getSize();
-        List<Tuple> tuples = new ArrayList<>();
-        List<Block> block = new ArrayList<>();
-        block.add(b);
-        ColumnDefinition cd = new ColumnDefinition();;
+        ArrayList<Block>[] sublists = new ArrayList[(int) Math.ceil(r_size/bm.getFreeBlocks())];
+        int current_list = 0;
+        ArrayList<Block> blocks = new ArrayList<>();
+        ColumnDefinition cd = relation.getColumns();;
         int sort_index = getSortColumnIndex();
-            // BlockSorter.sort(relation, block, byIndex);
 
-        BlockSorter.INSTANCE.sort(relation, block, cd.getColumnComparator(sort_index));
-        for (int j = 0; j < block_size; j++) {
-            Tuple t = b.iterator().next();
-            System.out.println(t.get(0).getClass());
-            tuples.add(t);
-       // }
-
+        for (Iterator<Block> r_it = relation.iterator(); r_it.hasNext();) {
+            Block b = r_it.next();
+            bm.load(b);
+            blocks.add(b);
+            //System.out.println(bm.getUsedBlocks());
+            if (bm.getFreeBlocks() == 0){
+                BlockSorter.INSTANCE.sort(relation, blocks, cd.getColumnComparator(sort_index));
+                //System.out.println(blocks);
+                sublists[current_list] = new ArrayList<>();
+                for (Block block:
+                        blocks) {
+                    //output.output(b);
+                    sublists[current_list].add(block);
+                    bm.release(block, false);
+                }
+                current_list++;
+                blocks.clear();
+            }
         }
+        if (!blocks.isEmpty()) {
+            BlockSorter.INSTANCE.sort(relation, blocks, cd.getColumnComparator(sort_index));
+            for (Block b :
+                    blocks) {
+                bm.release(b, true);
+            }
+        }
+        System.out.println(sublists[0].iterator());
+
+//        Block b = r_it_test.next();
+//        bm.load(b);
+//        System.out.println(b);
+//        bm.release(b, true);
+//        Iterator<Block> r_it_test2 = relation.iterator();
+//        Block c = r_it_test2.next();
+//        bm.load(c);
+//        System.out.println(c);
+
+
         //throw new UnsupportedOperationException("TODO");
     }
 }
