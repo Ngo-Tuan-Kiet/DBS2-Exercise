@@ -45,6 +45,7 @@ class TPMMSExerciseTests {
                 blockManager, columnDefinition,
                 TPMMSExerciseTests::class.java.getResourceAsStream("sorted_by_col0.output.csv")!!,
             )
+            println(controlRelation.joinToString())
             assertEquals(controlRelation.joinToString(), outputRelation.joinToString())
 
             assertEquals(3*6, cost.ioCost)
