@@ -7,8 +7,9 @@ import de.hpi.dbs2.exercise1.SortOperation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.google.common.collect.Iterators.contains;
 
 @ChosenImplementation(true)
 public class TPMMSJava extends SortOperation {
@@ -32,7 +33,7 @@ public class TPMMSJava extends SortOperation {
             throw new RelationSizeExceedsCapacityException();
 
         int r_size = relation.getEstimatedSize();
-        System.out.println(r_size);
+        //System.out.println(r_size);
 
         ArrayList<ArrayList<Block> > sublists = new ArrayList<>((int) Math.ceil(r_size/bm.getFreeBlocks()));
         int current_list = 0;
@@ -86,57 +87,69 @@ public class TPMMSJava extends SortOperation {
         Iterator<Tuple>[] block_iters = new Iterator[sublists.size()];
         PriorityQueue<Tuple> pq = new PriorityQueue<>(sublists.size(),
                 cd.getColumnComparator(sort_index));
+        Tuple first_tuple;
+
 
         if (Arrays.stream(first_blocks).anyMatch(x -> Objects.isNull(x))){
             // List<Block> empty_blocks = Arrays.stream(first_blocks).filter(x -> x.isEmpty()).collect(Collectors.toList());
             int[] empty_blocks = IntStream.range(0, sublists.size())
                     .filter(x -> first_blocks[x] == null).toArray();
-            System.out.println(empty_blocks.length);
+            //System.out.println(empty_blocks.length);
             for (int j = 0; j < empty_blocks.length; j++) {
                 int k = empty_blocks[j];
                 first_blocks[k] = iters[k].next();
                 bm.load(first_blocks[k]);
                 block_iters[k] = first_blocks[k].iterator();
-                pq.add(block_iters[k].next());
-                System.out.println(pq.peek());
+
+                Tuple test = block_iters[k].next();
+                System.out.println(test);
+                pq.add(test);
+                //System.out.println(pq.peek());
             }
         }
+        System.out.println();
+        System.out.println(block_cap);
+        System.out.println();
+        for (int i = 0; i < r_size*block_cap; i++) {
 
-        for (int i = 0; i < r_size; i++) {
-
-            if (Arrays.stream(first_blocks).anyMatch(x -> x.iterator().hasNext())){
+            if (Arrays.stream(block_iters).anyMatch(x -> !x.hasNext())){
                 // List<Block> empty_blocks = Arrays.stream(first_blocks).filter(x -> x.isEmpty()).collect(Collectors.toList());
                 int[] empty_blocks = IntStream.range(0, sublists.size())
-                        .filter(x -> first_blocks[x] == null).toArray();
-                System.out.println(empty_blocks.length);
+                        .filter(x -> !block_iters[x].hasNext()).toArray();
+                System.out.println("dfskajhfkjsdahfkjsdhf");
                 for (int j = 0; j < empty_blocks.length; j++) {
                     int k = empty_blocks[j];
+                    bm.release(first_blocks[k], false);
                     first_blocks[k] = iters[k].next();
                     bm.load(first_blocks[k]);
                     block_iters[k] = first_blocks[k].iterator();
                     pq.add(block_iters[k].next());
-                    System.out.println(pq.peek());
+                    //System.out.println(pq.peek());
                 }
             }
 
-            System.out.println(first_blocks[0]);
-            Tuple first_tuple = pq.poll();
-            out_block.append(first_tuple);
-            if (out_block.isFull()){
-                output.output(out_block);
+
+            first_tuple = pq.poll();
+            //System.out.println(first_blocks[0]);
+            //System.out.println(first_blocks[1]);
+            System.out.println(first_tuple);
+            for (int j = 0; j < block_iters.length; j++) {
+                if (contains(block_iters[j], first_tuple))
+                    pq.add(block_iters[i].next());
             }
 
 
-        }
 
-//        Block b = r_it_test.next();
-//        bm.load(b);
-//        System.out.println(b);
-//        bm.release(b, true);
-//        Iterator<Block> r_it_test2 = relation.iterator();
-//        Block c = r_it_test2.next();
-//        bm.load(c);
-//        System.out.println(c);
+            out_block.append(first_tuple);
+            if (out_block.isFull()){
+                output.output(out_block);
+                bm.release(out_block, false);
+                out_block = bm.allocate(true);
+            }
+            //System.out.println(block_iters[0].hasNext());
+            //System.out.println(block_iters[1].hasNext());
+
+        }
 
         //throw new UnsupportedOperationException("TODO");
     }
