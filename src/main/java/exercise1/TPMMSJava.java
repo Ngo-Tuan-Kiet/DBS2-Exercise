@@ -47,16 +47,14 @@ public class TPMMSJava extends SortOperation {
             bm.load(b);
             block_cap = b.getCapacity();
             blocks.add(b);
-            //System.out.println(bm.getUsedBlocks());
             if (bm.getFreeBlocks() == 0){
                 BlockSorter.INSTANCE.sort(relation, blocks, cd.getColumnComparator(sort_index));
                 System.out.println(blocks);
                 sublists.add(current_list, new ArrayList<>());
                 for (Block block:
                         blocks) {
-                    //output.output(b);
                     sublists.get(current_list).add(block);
-                    bm.release(block, false);
+                    bm.release(block, true);
                 }
                 current_list++;
                 blocks.clear();
@@ -70,23 +68,14 @@ public class TPMMSJava extends SortOperation {
             }
         }
         Iterator<Block>[] iters = new Iterator[sublists.size()];
-//        System.out.println(iters);
-//        Iterator test = sublists.get(0).iterator();
-//        Block b = (Block) test.next();
-//        b = (Block) test.next();
-//        b = (Block) test.next();
-//        bm.load(b);
-//        System.out.println(b);
         for (int i = 0; i < sublists.size(); i++) {
             iters[i] = sublists.get(i).iterator();
         }
-        //System.out.println(iters[0].next());
 
         Block out_block = bm.allocate(true);
         Block[] first_blocks = new Block[sublists.size()];
         Iterator<Tuple>[] block_iters = new Iterator[sublists.size()];
-        PriorityQueue<Tuple> pq = new PriorityQueue<>(sublists.size(),
-                cd.getColumnComparator(sort_index));
+        ArrayList<Tuple> al = new ArrayList<>(sublists.size());
         Tuple first_tuple;
 
 
@@ -100,45 +89,40 @@ public class TPMMSJava extends SortOperation {
                 first_blocks[k] = iters[k].next();
                 bm.load(first_blocks[k]);
                 block_iters[k] = first_blocks[k].iterator();
-
-                Tuple test = block_iters[k].next();
-                System.out.println(test);
-                pq.add(test);
-                //System.out.println(pq.peek());
+                al.add(k, block_iters[k].next());
             }
         }
         System.out.println();
-        System.out.println(block_cap);
-        System.out.println();
         for (int i = 0; i < r_size*block_cap; i++) {
 
-            if (Arrays.stream(block_iters).anyMatch(x -> !x.hasNext())){
+            if (Arrays.stream(block_iters).anyMatch(x -> !x.hasNext()) ){
                 // List<Block> empty_blocks = Arrays.stream(first_blocks).filter(x -> x.isEmpty()).collect(Collectors.toList());
                 int[] empty_blocks = IntStream.range(0, sublists.size())
                         .filter(x -> !block_iters[x].hasNext()).toArray();
-                System.out.println("dfskajhfkjsdahfkjsdhf");
+                //System.out.println("dfskajhfkjsdahfkjsdhf");
                 for (int j = 0; j < empty_blocks.length; j++) {
                     int k = empty_blocks[j];
-                    bm.release(first_blocks[k], false);
-                    first_blocks[k] = iters[k].next();
-                    bm.load(first_blocks[k]);
-                    block_iters[k] = first_blocks[k].iterator();
-                    pq.add(block_iters[k].next());
-                    //System.out.println(pq.peek());
+
+                    if (iters[k].hasNext()){
+                        bm.release(first_blocks[k], false);
+                        first_blocks[k] = iters[k].next();
+                        bm.load(first_blocks[k]);
+                        block_iters[k] = first_blocks[k].iterator();
+                    } else {
+                        //System.out.println("---------------------------------");
+                    }
                 }
             }
+            //System.out.println(block_iters[0].next());
+            //System.out.println(block_iters[1].next());
+            first_tuple = Collections.min(al, cd.getColumnComparator(sort_index));
+            //System.out.println(al.toString());
+            int id_smallest = al.indexOf(first_tuple);
+            if (block_iters[id_smallest].hasNext())
+                al.add(id_smallest, block_iters[id_smallest].next());
+            al.remove(first_tuple);
 
-
-            first_tuple = pq.poll();
-            //System.out.println(first_blocks[0]);
-            //System.out.println(first_blocks[1]);
             System.out.println(first_tuple);
-            for (int j = 0; j < block_iters.length; j++) {
-                if (contains(block_iters[j], first_tuple))
-                    pq.add(block_iters[i].next());
-            }
-
-
 
             out_block.append(first_tuple);
             if (out_block.isFull()){
@@ -146,13 +130,15 @@ public class TPMMSJava extends SortOperation {
                 bm.release(out_block, false);
                 out_block = bm.allocate(true);
             }
-            //System.out.println(block_iters[0].hasNext());
-            //System.out.println(block_iters[1].hasNext());
 
         }
-
+        bm.release(out_block, false);
+        for (int i = 0; i < first_blocks.length; i++) {
+            bm.release(first_blocks[i], false);
+        }
         //throw new UnsupportedOperationException("TODO");
     }
+
 }
 
 
