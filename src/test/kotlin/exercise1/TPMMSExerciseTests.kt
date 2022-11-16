@@ -45,8 +45,22 @@ class TPMMSExerciseTests {
                 blockManager, columnDefinition,
                 TPMMSExerciseTests::class.java.getResourceAsStream("sorted_by_col0.output.csv")!!,
             )
-            println(controlRelation.joinToString())
             assertEquals(controlRelation.joinToString(), outputRelation.joinToString())
+            val control_it = controlRelation.iterator()
+            val output_it = outputRelation.iterator()
+
+            val cfirst_block = blockManager.load(control_it.next())
+            val ofirst_block = blockManager.load(output_it.next())
+
+            assertEquals(cfirst_block.get(0).get(0), ofirst_block.get(0).get(0))
+
+            blockManager.release(cfirst_block, false)
+            blockManager.release(ofirst_block, false)
+
+            val csecond_block = blockManager.load(control_it.next())
+            val osecond_block = blockManager.load(output_it.next())
+
+            assertEquals(csecond_block.get(0).get(0), osecond_block.get(0).get(0))
 
             assertEquals(3*6, cost.ioCost)
         }
